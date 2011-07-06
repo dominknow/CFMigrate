@@ -1,0 +1,31 @@
+First, create a "migrations" folder at the root of your application and add it as a mapping in your application.cfc template "this" section (i.e. this.mappings["/migrations"] = getDirectoryFromPath(getCurrentTemplatePath()) & "/migrations";)
+
+Then download and unzip the code at ??? into the migrations folder. Take a look at the code, as query statement parameters need to be adjusted to match how your application accesses your datasource (suggestions on how to make this more generic are welcome). You will need to make changes to both the migrate.cfc and the sample_migration.cfc.
+
+The code consists of three files: migrate.cfm, migrate.cfc, and sample_migration.cfc.
+
+The migrate.cfm file is used to call one of three actions: setup, create, and run. Setup needs to be run first, as it creates a table in your database called "migrations" that tracks which database changes have been completed.
+
+http://{application_root}/migrations?action=setup
+
+"Create" uses the sample_migration.cfc to create a new migration with a unique naming convention. The convention is yyyymmddhhmmss_{a name of your choosing}_mg.cfc. You pass "create" a meaningful name which describes what the migration accomplishes.
+
+http://{application_root}/migrations?action=create&name=add_work_phone_to_person_table
+
+This will create a new file in your migrations folder and call it something similar to 20091004142253_add_work_phone_to_person_table_mg.cfc. Migrations must start with a 14 character number (representing the date and time the migration was created), and end with "_mg" to indicate it is a migrations file.
+
+Once you have created the migration file, there are two places to edit it. Under the "migrate_up" function and query add sql statements for the desired schema change (i.e. "alter table person add work_phone varchar(50)"). Under the "migrate_down" function and query, add the analogous sql code that would revert the change (i.e. "alter table person drop column work_phone").
+
+You can create as many migrations as you like, and then run them all at once, or run each migration individually after creating it. A migration can be include schema changes, new views, new indices, changes to data, etc. Basically, anything that you can run through a CF query statement. I suggest you do no more than one change in each migration, as they are easier to track and revert.
+
+To run the migrations, simply call http://{application_root}/migrations?action=run. This will look at all of the migration files in your migrations folder, check whether they have been previously run (by looking at the records in the migrations table), and if not, run the migration (call the migration's migrate_up function).
+
+To revert back to a particular migration (basically, to back up the database in time), include a version number when call the run action: http://{application_root}/migrations?action=run&version=20091004142253. Any migrations that have a higher version number that have already been run will be reverted (they will have their migrate_down code run).
+
+The idea is that you are making changes to your application code that have dependent changes in the database. Create your migration at the same time you implement your application changes, and save them both to your repository, and they will be kept in synch.
+
+If you have multiple developers making changes to the database, they can each be writing their migrations (it is unlikely that two will have the same version number). When a developer updates their local code base from the repository, they will get the migrations created by other developers and can run them, in addition to their own.
+
+The code that I have written to handle this is rudimentary at best. I am sure better CF developers could produce a much more robust set of code, that better handles security (who is allowed to run the migration code) and requires less modification for incorporation into disparate applications.
+
+I am very interested in your thoughts and improvements to the concept and the code. Perhaps someone else has already done this (I couldn't find anything, but that may mean little). If so, i would love to hear about it. 
