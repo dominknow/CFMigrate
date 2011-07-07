@@ -17,22 +17,16 @@
 	</cffunction>
 
 	<cffunction name="migrate_up" access="public" output="true" returntype="void">
-		<!--- Add you database change here
 		<cfquery name="migrate_up" datasource="#variables.datasource#" username="#variables.dbUsername#" password="#variables.dbPassword#">
+			CREATE TABLE test1(
+				[id][varchar](14) NOT NULL
+			)
 		</cfquery>	
-		 --->
-
-		 <!--- Remove from your working code --->
-		 <cfthrow type="cfmigrate.not_implemented" />
 	</cffunction>
 
 	<cffunction name="migrate_down" access="public" output="true" returntype="void">
-		<!--- add your down database change here 
 		<cfquery name="migrate_up" datasource="#variables.datasource#" username="#variables.dbUsername#" password="#variables.dbPassword#">
+			DROP TABLE test1
 		</cfquery>	
-		--->
-
-		 <!--- Remove from your working code --->
-		 <cfthrow type="cfmigrate.not_implemented" />
 	</cffunction>
 </cfcomponent>
