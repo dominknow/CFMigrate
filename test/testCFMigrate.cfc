@@ -110,18 +110,4 @@ component extends="mxunit.framework.TestCase" {
 		assertTrue(local.verifyTest1.recordcount, "Table test1 not created");
 		assertFalse(local.verifyTest2.recordcount, "Table test2 not removed");
 	}
-
-	public void function testTestSetup_false() output="false" {
-		assertFalse(variables.cfMigrate.test_setup(), "[migrations] table should not exist, this should be false");
-	}
-
-	public void function testTestSetup_true() output="false" {
-		transaction {
-			variables.cfMigrate.setup_migrations();
-			local.isSetup = variables.cfMigrate.test_setup();
-			transaction action="rollback";
-		}
-
-		assertTrue(local.isSetup, "[migrations] table should exists, this should be true");
-	}
 }

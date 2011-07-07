@@ -37,24 +37,6 @@
 		<cfreturn this />
 	</cffunction>
 
-	<cffunction name="create_migration" displayname="create_migration" access="public" output="true" returntype="string">
-		<cfargument name="migration_name" displayName="migration_name" type="String" required="true" />
-		
-		<cfset var fileName = variables.directory_name & "/" & dateFormat(now(), "yyyymmdd") & timeFormat(now(), "hhmmss") & "_" & arguments.migration_name & "_mg.cfc" />
-		<cffile action="read"
-				file="#variables.sample_path#"
-				variable="sample_file"	>
-		<cffile action="write"
-				file = "#fileName#"
-				output = "#sample_file#">
-		<cfif variables.verbose>
-			<cfoutput>
-				The migration file was created
-			</cfoutput>
-		</cfif>
-		<cfreturn fileName />
-	</cffunction>
-
 
 	<cffunction name="run_migrations" displayname="run_migrations" access="public" output="true" returntype="boolean">
 		 <cfargument name="migrate_to_version" displayName="migration_name" type="String" required="false" />
@@ -63,9 +45,6 @@
 			<cfset var migration_number = "">
 			<cfset var st = "">
 			<cfset var REmigration_version = "\d{14}">
-			<cfset var get_migrations = "" />
-			<cfset var sorted_migrations = "" />
-			<cfset var store_migration = "" />
 			
 			<cftry>
 				<cfquery name="get_migrations" datasource="#variables.datasource#" username="#variables.dbUsername#" password="#variables.dbPassword#">
@@ -209,9 +188,27 @@
 							
 		<cfreturn true />
 	</cffunction>
+
+	<cffunction name="create_migration" displayname="create_migration" access="public" output="true" returntype="string">
+		<cfargument name="migration_name" displayName="migration_name" type="String" required="true" />
+		
+		<cfset var fileName = variables.directory_name & "/" & dateFormat(now(), "yyyymmdd") & timeFormat(now(), "hhmmss") & "_" & arguments.migration_name & "_mg.cfc" />
+		<cffile action="read"
+				file="#variables.sample_path#"
+				variable="sample_file"	>
+		<cffile action="write"
+				file = "#fileName#"
+				output = "#sample_file#">
+		<cfif variables.verbose>
+			<cfoutput>
+				The migration file was created
+			</cfoutput>
+		</cfif>
+		<cfreturn fileName />
+	</cffunction>
 	
 	<cffunction name="setup_migrations" displayname="setup_migrations" access="public" output="true" returntype="boolean">
-			<cfset var create_migrations_table = "" />	
+		
 			<!---create the migrations table --->
 			<cfquery name="create_migrations_table" datasource="#variables.datasource#" username="#variables.dbUsername#" password="#variables.dbPassword#">
 				CREATE TABLE [dbo].[migrations](
@@ -227,20 +224,6 @@
 		</cfif>
 
 		<cfreturn true />
-	</cffunction>
-
-	<cffunction name="test_setup" displayname="test_setup" access="public" output="true" returntype="boolean">
-		<cfset var setup_exists = "" />
-		<cfset var tables = "" />
-
-		<cfdbinfo name="tables" datasource="#variables.datasource#" username="#variables.dbUsername#" password="#variables.dbPassword#" type="tables" />
-		<cfquery name="setup_exists" dbtype="query">
-			SELECT *
-			FROM tables
-			WHERE TABLE_NAME = 'migrations'
-		</cfquery>
-
-		<cfreturn setup_exists.recordcount />
 	</cffunction>
 
 </cfcomponent>
