@@ -4,6 +4,8 @@
 	<cfproperty name="dbUsername" type="string" />
 	<cfproperty name="dbPassword" type="string" />
 	<cfproperty name="verbose" type="boolean" />
+	<cfproperty name="directoryName" type="string" />
+	<cfproperty name="directoryPath" type="string" />
 
 	<cffunction name="init" access="public" output="false" returntype="any" hint="The public constructor">
 		<cfargument name="datasource" type="string" required="true" hint="The datasource to operate on" />
