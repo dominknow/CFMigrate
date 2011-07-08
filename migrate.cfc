@@ -132,7 +132,6 @@
 									Delete from migrations where migration_number = '#migration_number#'
 								</cfquery>
 								<cfcatch type="any">
-									<cftransaction action="rollback" />
 									<cfif variables.verbose>
 										<cfoutput>
 										<p>There was an error in the migration, the changes in this migration 
@@ -183,7 +182,6 @@
 										('#migration_number#', getdate())
 								</cfquery>
 								<cfcatch type="any">
-									<cftransaction action="rollback" />
 									<cfif variables.verbose>
 										<cfoutput>
 											<p>There was an error in the migration, the changes in this migration 
