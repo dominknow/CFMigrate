@@ -1,17 +1,47 @@
-<cfcomponent output="true">
+<cfcomponent output="true" hint="This component provides the methods necessary to create, run and rollback database migrations">
 
 	<cfproperty name="datasource" type="string" />
 	<cfproperty name="dbUsername" type="string" />
 	<cfproperty name="dbPassword" type="string" />
 	<cfproperty name="verbose" type="boolean" />
 
-	<cffunction name="init" access="public" output="false" returntype="any" hint="The public constructor">
-		<cfargument name="datasource" type="string" required="true" hint="The datasource to operate on" />
-		<cfargument name="dbUsername" type="string" hint="The DB username, if required" default="" />
-		<cfargument name="dbPassword" type="string" hint="The DB password, if required" default="" />
-		<cfargument name="verbose" type="boolean" hint="If true, output progress information" default="false" />
-		<cfargument name="directoryName" type="string" required="false" hint="The directory migrations are run from" />
-		<cfargument name="directoryPath" type="string" required="false" hint="The path to the migrations directory in dot form, used to instantiate the migrations.  Required if directoryName is specific. Example: path.to.migrations" />
+	<cffunction 
+		name="init" 
+		access="public" 
+		output="false" 
+		returntype="any" 
+		hint="The public constructor">
+
+		<cfargument 
+			name="datasource" 
+			type="string" 
+			required="true" 
+			hint="The datasource to operate on" />
+		<cfargument 
+			name="dbUsername" 
+			type="string" 
+			hint="The DB username, if required" 
+			default="" />
+		<cfargument 
+			name="dbPassword" 
+			type="string" 
+			hint="The DB password, if required" 
+			default="" />
+		<cfargument 
+			name="verbose" 
+			type="boolean" 
+			hint="If true, output progress information" 
+			default="false" />
+		<cfargument 
+			name="directoryName" 
+			type="string" 
+			required="false" 
+			hint="The directory migrations are run from" />
+		<cfargument 
+			name="directoryPath" 
+			type="string" 
+			required="false" 
+			hint="The path to the migrations directory in dot form, used to instantiate the migrations.  Required if directoryName is specific. Example: path.to.migrations" />
 
 		<cfset variables.datasource = arguments.datasource />
 		<cfset variables.dbUsername = arguments.dbUsername />
@@ -37,8 +67,20 @@
 		<cfreturn this />
 	</cffunction>
 
-	<cffunction name="create_migration" displayname="create_migration" access="public" output="true" returntype="string">
-		<cfargument name="migration_name" displayName="migration_name" type="String" required="true" />
+	<cffunction 
+		name="create_migration" 
+		displayname="create_migration" 
+		access="public" 
+		output="true" 
+		returntype="string"
+		hint="Creates the outline of a new migration CFC. Returns the full path to the new CFC on disk.">
+
+		<cfargument 
+			name="migration_name" 
+			displayName="migration_name" 
+			type="String" 
+			required="true"
+			hint="The name of the migration. Should describe what the migration does, will be used to compose the CFC filename"/>
 		
 		<cfset var fileName = variables.directory_name & "/" & dateFormat(now(), "yyyymmdd") & timeFormat(now(), "hhmmss") & "_" & arguments.migration_name & "_mg.cfc" />
 		<cffile action="read"
@@ -56,8 +98,20 @@
 	</cffunction>
 
 
-	<cffunction name="run_migrations" displayname="run_migrations" access="public" output="true" returntype="boolean">
-		 <cfargument name="migrate_to_version" displayName="migration_name" type="String" required="false" />
+	<cffunction 
+		name="run_migrations" 
+		displayname="run_migrations" 
+		access="public" 
+		output="true" 
+		returntype="boolean"
+		hint="Method called to run outstanding migrations, or to roll back to a previous migration">
+
+		<cfargument 
+			name="migrate_to_version" 
+			displayName="migration_name" 
+			type="String" 
+			required="false"
+			hint="If provided, will rollback any previously run migrations to the given migration name.  If omitted, will run all outstanding migrations." />
 			
 			<cfset var migrations_list = "">
 			<cfset var migration_number = "">
@@ -208,7 +262,14 @@
 		<cfreturn true />
 	</cffunction>
 	
-	<cffunction name="setup_migrations" displayname="setup_migrations" access="public" output="true" returntype="boolean">
+	<cffunction 
+		name="setup_migrations" 
+		displayname="setup_migrations" 
+		access="public" 
+		output="true" 
+		returntype="boolean"
+		hint="Setup the DB tables to record migrations.">
+
 			<cfset var create_migrations_table = "" />	
 			<!---create the migrations table --->
 			<cfquery name="create_migrations_table" datasource="#variables.datasource#" username="#variables.dbUsername#" password="#variables.dbPassword#">
