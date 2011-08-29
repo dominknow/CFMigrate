@@ -82,7 +82,7 @@
 			required="true"
 			hint="The name of the migration. Should describe what the migration does, will be used to compose the CFC filename"/>
 		
-		<cfset var fileName = variables.directory_name & "/" & dateFormat(now(), "yyyymmdd") & timeFormat(now(), "hhmmss") & "_" & arguments.migration_name & "_mg.cfc" />
+		<cfset var fileName = variables.directory_name & "/" & dateFormat(now(), "yyyymmdd") & timeFormat(now(), "HHmmss") & "_" & arguments.migration_name & "_mg.cfc" />
 		<cffile action="read"
 				file="#variables.sample_path#"
 				variable="sample_file"	>
