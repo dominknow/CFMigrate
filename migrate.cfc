@@ -85,10 +85,12 @@
 		<cfset var fileName = variables.directory_name & "/" & dateFormat(now(), "yyyymmdd") & timeFormat(now(), "HHmmss") & "_" & arguments.migration_name & "_mg.cfc" />
 		<cffile action="read"
 				file="#variables.sample_path#"
-				variable="sample_file"	>
+				variable="sample_file"
+				charset="utf-8">
 		<cffile action="write"
 				file = "#fileName#"
-				output = "#sample_file#">
+				output = "#sample_file#"
+				charset="utf-8">
 		<cfif variables.verbose>
 			<cfoutput>
 				The migration file was created
