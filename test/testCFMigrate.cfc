@@ -124,4 +124,14 @@ component extends="mxunit.framework.TestCase" {
 
 		assertTrue(local.isSetup, "[migrations] table should exists, this should be true");
 	}
+
+	public void function testListMigrations_all() output="false" {
+		transaction {
+			variables.cfMigrate.setup_migrations();
+			local.toApply = variables.cfMigrate.list_migrations();
+			transaction action="rollback";
+		}
+
+		assertEquals(2, arrayLen(local.toApply));
+	}
 }

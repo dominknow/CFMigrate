@@ -5,42 +5,42 @@
 	<cfproperty name="dbPassword" type="string" />
 	<cfproperty name="verbose" type="boolean" />
 
-	<cffunction 
-		name="init" 
-		access="public" 
-		output="false" 
-		returntype="any" 
+	<cffunction
+		name="init"
+		access="public"
+		output="false"
+		returntype="any"
 		hint="The public constructor">
 
-		<cfargument 
-			name="datasource" 
-			type="string" 
-			required="true" 
+		<cfargument
+			name="datasource"
+			type="string"
+			required="true"
 			hint="The datasource to operate on" />
-		<cfargument 
-			name="dbUsername" 
-			type="string" 
-			hint="The DB username, if required" 
+		<cfargument
+			name="dbUsername"
+			type="string"
+			hint="The DB username, if required"
 			default="" />
-		<cfargument 
-			name="dbPassword" 
-			type="string" 
-			hint="The DB password, if required" 
+		<cfargument
+			name="dbPassword"
+			type="string"
+			hint="The DB password, if required"
 			default="" />
-		<cfargument 
-			name="verbose" 
-			type="boolean" 
-			hint="If true, output progress information" 
+		<cfargument
+			name="verbose"
+			type="boolean"
+			hint="If true, output progress information"
 			default="false" />
-		<cfargument 
-			name="directoryName" 
-			type="string" 
-			required="false" 
+		<cfargument
+			name="directoryName"
+			type="string"
+			required="false"
 			hint="The directory migrations are run from" />
-		<cfargument 
-			name="directoryPath" 
-			type="string" 
-			required="false" 
+		<cfargument
+			name="directoryPath"
+			type="string"
+			required="false"
 			hint="The path to the migrations directory in dot form, used to instantiate the migrations.  Required if directoryName is specific. Example: path.to.migrations" />
 
 		<cfset variables.datasource = arguments.datasource />
@@ -67,21 +67,21 @@
 		<cfreturn this />
 	</cffunction>
 
-	<cffunction 
-		name="create_migration" 
-		displayname="create_migration" 
-		access="public" 
-		output="true" 
+	<cffunction
+		name="create_migration"
+		displayname="create_migration"
+		access="public"
+		output="true"
 		returntype="string"
 		hint="Creates the outline of a new migration CFC. Returns the full path to the new CFC on disk.">
 
-		<cfargument 
-			name="migration_name" 
-			displayName="migration_name" 
-			type="String" 
+		<cfargument
+			name="migration_name"
+			displayName="migration_name"
+			type="String"
 			required="true"
 			hint="The name of the migration. Should describe what the migration does, will be used to compose the CFC filename"/>
-		
+
 		<cfset var fileName = variables.directory_name & "/" & dateFormat(now(), "yyyymmdd") & timeFormat(now(), "HHmmss") & "_" & arguments.migration_name & "_mg.cfc" />
 		<cffile action="read"
 				file="#variables.sample_path#"
@@ -100,78 +100,52 @@
 	</cffunction>
 
 
-	<cffunction 
-		name="run_migrations" 
-		displayname="run_migrations" 
-		access="public" 
-		output="true" 
+	<cffunction
+		name="run_migrations"
+		displayname="run_migrations"
+		access="public"
+		output="true"
 		returntype="boolean"
 		hint="Method called to run outstanding migrations, or to roll back to a previous migration">
 
-		<cfargument 
-			name="migrate_to_version" 
-			displayName="migration_name" 
-			type="String" 
+		<cfargument
+			name="migrate_to_version"
+			displayName="migration_name"
+			type="String"
 			required="false"
 			hint="If provided, will rollback any previously run migrations to the given migration name.  If omitted, will run all outstanding migrations." />
-			
+
 			<cfset var migrations_list = "">
 			<cfset var migration_number = "">
-			<cfset var st = "">
-			<cfset var REmigration_version = "\d{14}">
 			<cfset var get_migrations = "" />
 			<cfset var sorted_migrations = "" />
 			<cfset var store_migration = "" />
-			
-			<cftry>
-				<cfquery name="get_migrations" datasource="#variables.datasource#" username="#variables.dbUsername#" password="#variables.dbPassword#">
-					Select migration_number from migrations
-				</cfquery>
-				<cfset migrations_list = ValueList(get_migrations.migration_number)>
-				<cfcatch type="database">
-					<cfif variables.verbose>
-						The migrations could not run, there was an error trying to access the migrations table. You must run migrations setup to create the migrations table prior to running your first migration.
-						<cfset migrations_list = "">
-					<cfelse>
-						<cfthrow type="cfmigrate.setup" message="The migrations could not run, there was an error trying to access the migrations table. You must run migrations setup to create the migrations table prior to running your first migration." />
-					</cfif>
-					<cfabort>
-				</cfcatch>
-			</cftry>
-	
-			<!--- get the list of migration cfc's from the migrations folder --->
-			<cfdirectory action="LIST" 
-				directory="#variables.directory_name#" 
-				name="migration_files" 
-				filter="*_mg.cfc"> <!--- valid migration files must end in _mg --->
-				
-			<!--- If a migration version was provided to revert to, check that it is a valid version 
+
+			<cfset migrations_list = get_migration_list() />
+			<cfset sorted_migrations = get_migration_files() />
+
+			<!--- If a migration version was provided to revert to, check that it is a valid version
 				that was previously run --->
 			<cfif isdefined("ARGUMENTS.migrate_to_version") and ListFind(migrations_list, migrate_to_version) eq 0>
 				<cfif variables.verbose>
 					<cfoutput>
-					ERROR: A migration version to revert to was provided, but a previously run migration matching this version number could not be found. You must supply a version that was previously run. 
+					ERROR: A migration version to revert to was provided, but a previously run migration matching this version number could not be found. You must supply a version that was previously run.
 					</cfoutput>
 				<cfelse>
 					<cfthrow type="cfmigrate.invalid" message="A migration version to revert to was provided, but a previously run migration matching this version number could not be found. You must supply a version that was previously run." />
 				</cfif>
 				<cfabort>
 			</cfif>
-				
+
 			<cfif isdefined("ARGUMENTS.migrate_to_version")>
 				<!--- The user want to run migrations to a certain migration number. If a previous migration
 				has been run, revert it. Do not run migrations that have not been run --->
-				<cfquery name="sorted_migrations" dbtype="query">
-						select * from migration_files
-						order by name DESC
-				</cfquery>
 				<cfloop query="sorted_migrations">
-					<cfset st = REFind(REmigration_version,sorted_migrations.name,1,"TRUE")>
-					<cfset migration_number = Mid(sorted_migrations.name,st.pos[1],st.len[1])>
+					<cfset migration_number = get_migration_file_number(sorted_migrations.name)>
 					<!--- strip the .cfc from the file name --->
 					<cfset migration_name = left(sorted_migrations.name, len(sorted_migrations.name) - 4)>
-					
-					<!--- If the migration is a later version than the version to revert to, 
+
+					<!--- If the migration is a later version than the version to revert to,
 					and the migration was previously run, revert the migration --->
 					<cfif (migration_number gt ARGUMENTS.migrate_to_version) and ListFind(migrations_list, migration_number) neq 0 >
 						<cfif variables.verbose>
@@ -190,7 +164,7 @@
 								<cfcatch type="any">
 									<cfif variables.verbose>
 										<cfoutput>
-										<p>There was an error in the migration, the changes in this migration 
+										<p>There was an error in the migration, the changes in this migration
 										have been rolled back and no other migrations will be run. </p>
 										<p>#cfcatch.message#</p>
 										<cfif cfcatch.type EQ "database">
@@ -205,22 +179,16 @@
 								</cfcatch>
 							</cftry>
 						</cftransaction>
-					</cfif> 
-	
+					</cfif>
+
 				</cfloop>
 			<cfelse>
 			<!--- No migration version was passed in, so run all of the migrations that have not yet been run --->
-			
-				<cfquery name="sorted_migrations" dbtype="query">
-						select * from migration_files
-						order by name ASC
-				</cfquery>
 				<cfloop query="sorted_migrations">
-					<cfset st = REFind(REmigration_version,sorted_migrations.name,1,"TRUE")>
-					<cfset migration_number = Mid(sorted_migrations.name,st.pos[1],st.len[1])>
+					<cfset migration_number = get_migration_file_number(sorted_migrations.name)>
 					<!--- strip the .cfc from the file name --->
 					<cfset migration_name = left(sorted_migrations.name, len(sorted_migrations.name) - 4)>
-					
+
 					<!--- If the migration has not been run, run it --->
 					<cfif ListFind(migrations_list, migration_number) eq 0 >
 						<cfif variables.verbose>
@@ -240,7 +208,7 @@
 								<cfcatch type="any">
 									<cfif variables.verbose>
 										<cfoutput>
-											<p>There was an error in the migration, the changes in this migration 
+											<p>There was an error in the migration, the changes in this migration
 											have been rolled back and no other migrations will be run. </p>
 											<p>#cfcatch.message#</p>
 											<cfif cfcatch.type EQ "database">
@@ -255,32 +223,58 @@
 								</cfcatch>
 							</cftry>
 						</cftransaction>
-					</cfif> 
-	
+					</cfif>
+
 				</cfloop>
-				
+
 			</cfif>
-							
+
 		<cfreturn true />
 	</cffunction>
-	
-	<cffunction 
-		name="setup_migrations" 
-		displayname="setup_migrations" 
-		access="public" 
-		output="true" 
+
+	<cffunction
+		name="list_migrations"
+		displayname="list_migrations"
+		access="public"
+		output="true"
+		returntype="any"
+		hint="Returns a list of migration files to be run">
+
+		<cfset var migrations_list = "" />
+		<cfset var migration_files_sorted = "" />
+		<cfset var toRun = arrayNew(1) />
+		<cfset var migration_number = "" />
+
+		<cfset migrations_list = get_migration_list() />
+		<cfset migration_files_sorted = get_migration_files() />
+		<cfloop query="migration_files_sorted">
+			<cfset migration_number = get_migration_file_number(migration_files_sorted.name) />
+			<cfif NOT listFind(migrations_list, migration_number)>
+				<cfset arrayAppend(toRun, migration_files_sorted.name) />
+			</cfif>
+		</cfloop>
+
+		<cfreturn toRun />
+	</cffunction>
+
+
+	<cffunction
+		name="setup_migrations"
+		displayname="setup_migrations"
+		access="public"
+		output="true"
 		returntype="boolean"
 		hint="Setup the DB tables to record migrations.">
 
-			<cfset var create_migrations_table = "" />	
+			<cfset var create_migrations_table = "" />
 			<!---create the migrations table --->
 			<cfquery name="create_migrations_table" datasource="#variables.datasource#" username="#variables.dbUsername#" password="#variables.dbPassword#">
 				CREATE TABLE [dbo].[migrations](
 					[migration_number] [varchar](14) NOT NULL,
 					[migration_run_at] [datetime] NOT NULL
-					) 
+					)
 			</cfquery>
-		
+
 		<cfif variables.verbose>
 			<cfoutput>
 				The migration table was created
@@ -302,6 +296,57 @@
 		</cfquery>
 
 		<cfreturn setup_exists.recordcount />
+	</cffunction>
+
+	<cffunction name="get_migration_list" access="private" output="false" returntype="any">
+
+		<cfset var get_migrations = "" />
+		<cfset var migrations_list = "" />
+
+		<cftry>
+			<cfquery name="get_migrations" datasource="#variables.datasource#" username="#variables.dbUsername#" password="#variables.dbPassword#">
+				Select migration_number from migrations
+			</cfquery>
+			<cfset migrations_list = ValueList(get_migrations.migration_number)>
+			<cfcatch type="database">
+				<cfif variables.verbose>
+					The migrations could not run, there was an error trying to access the migrations table. You must run migrations setup to create the migrations table prior to running your first migration.
+					<cfset migrations_list = "">
+				<cfelse>
+					<cfthrow type="cfmigrate.setup" message="The migrations could not run, there was an error trying to access the migrations table. You must run migrations setup to create the migrations table prior to running your first migration." />
+				</cfif>
+				<cfabort>
+			</cfcatch>
+		</cftry>
+
+		<cfreturn migrations_list />
+	</cffunction>
+
+	<cffunction name="get_migration_files" access="private" output="false" returntype="query">
+
+		<cfset var migration_files = "" />
+		<cfset var sorted_migrations = "" />
+		<!--- get the list of migration cfc's from the migrations folder --->
+		<cfdirectory action="LIST"
+			directory="#variables.directory_name#"
+			name="migration_files"
+			filter="*_mg.cfc"> <!--- valid migration files must end in _mg --->
+
+		<cfquery name="sorted_migrations" dbtype="query">
+				select * from migration_files
+				order by name ASC
+		</cfquery>
+
+		<cfreturn sorted_migrations />
+	</cffunction>
+
+	<cffunction name="get_migration_file_number" access="private" output="false" returntype="string">
+		<cfargument name="migrationFileName" type="string" required="true" />
+		<cfset var st = "">
+		<cfset var REmigration_version = "\d{14}">
+
+		<cfset st = REFind(REmigration_version,arguments.migrationFileName,1,"TRUE")>
+		<cfreturn Mid(arguments.migrationFileName,st.pos[1],st.len[1])>
 	</cffunction>
 
 </cfcomponent>
